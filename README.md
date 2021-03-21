@@ -8,7 +8,6 @@
 - window.matchMedia 이해하기
 - 참고
 
-
 ### theme 별 스타일 코드 관리(light, dark)
 
 ```js
@@ -51,7 +50,7 @@ function App() {
         <Toggle theme={theme} toggleTheme={toggleTheme}/>
         ...
     </ThemeProvider>
-);
+  );
 }
 ```
 
@@ -59,7 +58,7 @@ function App() {
 
 ```js
 // src/hooks/useDarkMode.js
-   
+
 import {useEffect, useState} from 'react';
 
 export const useDarkMode = () => {
@@ -110,11 +109,12 @@ OS 테마(lightMode or darkMode)를 브라우저에서 확인하는 속성이다
 
 브라우저 마다 지원 할수도 있고 안 할수도 있다.  
 최신 브라우저 대부분 지원한다.(`IE 10 이상`, `Edge`, `Firefox 6-`, `Chrome 9-`, ..)  
-`Can I Use` 에서 확인해서 사용하면 될거 같다.   
+`Can I Use` 에서 확인해서 사용하면 될거 같다.
 
 <br />
 
 `OS 설정이, dark 일 때`
+
 ```
 window.matchMedia('(prefers-color-scheme: dark)');
 // MediaQueryList {media: "(prefers-color-scheme: dark)", matches: true, onchange: null}
@@ -123,8 +123,8 @@ window.matchMedia('(prefers-color-scheme: light)');
 // MediaQueryList {media: "(prefers-color-scheme: light)", matches: false, onchange: null}
 ```
 
-
 `OS 설정이, light 일 때`
+
 ```
 window.matchMedia('(prefers-color-scheme: light)');
 // MediaQueryList {media: "(prefers-color-scheme: light)", matches: true, onchange: null}
