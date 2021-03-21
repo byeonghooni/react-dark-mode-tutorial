@@ -1,70 +1,138 @@
-# Getting Started with Create React App
+## React 프로젝트에서 Dark Mode 사용하기
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### 목차
 
-## Available Scripts
+- theme 별 스타일 코드 관리(light, dark)
+- 루트 컴포넌트(theme 변경 기준)에서 dark, light를 state 로 관리
+- theme 전환용 hook 사용하기
+- window.matchMedia 이해하기
+- 참고
 
-In the project directory, you can run:
 
-### `yarn start`
+### theme 별 스타일 코드 관리(light, dark)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```js
+// src/styles/theme.js
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+export const lightTheme = {
+  body: '#E2E2E2',
+  text: '#363537',
+  toggleBorder: '#FFF',
+  gradient: 'linear-gradient(#39598A, #79D7ED)',
+};
 
-### `yarn test`
+export const darkTheme = {
+  body: '#363537',
+  text: '#FAFAFA',
+  toggleBorder: '#6B8096',
+  gradient: 'linear-gradient(#091236, #1E215D)',
+} 
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 루트 컴포넌트(theme 변경 기준)에서 dark, light를 state 로 관리
 
-### `yarn build`
+```js
+// src/App.js
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+...
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+function App() {
+  const [theme, toggleTheme, componentMounted] = useDarkMode();
+  const themeMode = theme === 'light' ? lightTheme : darkTheme;
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+  if (!componentMounted) {
+    return <div/>
+  }
 
-### `yarn eject`
+  return (
+    <ThemeProvider theme={themeMode}>
+      <>
+        <GlobalStyles/>
+        <Toggle theme={theme} toggleTheme={toggleTheme}/>
+        ...
+    </ThemeProvider>
+);
+}
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### theme 전환용 hook 사용하기
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```js
+// src/hooks/useDarkMode.js
+   
+import {useEffect, useState} from 'react';
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+export const useDarkMode = () => {
+  const [theme, setTheme] = useState('light');
+  const [componentMounted, setComponentMounted] = useState(false);
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+  const setMode = mode => {
+    // localStorage 로 관리(세션 유지)
+    window.localStorage.setItem('theme', mode);
+    setTheme(mode);
+  };
 
-## Learn More
+  const toggleTheme = () => {
+    if (theme === 'light') {
+      setMode('dark');
+    } else {
+      setMode('light');
+    }
+  };
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+  useEffect(() => {
+    const localTheme = window.localStorage.getItem('theme');
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    if (localTheme) {
+      setTheme(localTheme)
+    } else {
+      // OS 설정(light or dark)여부 확인
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
+      } else {
+        setTheme('light');
+      }
+    }
 
-### Code Splitting
+    // useDarkMode를 사용하는 컴포넌트가 완전히 마운트된 후 사용하기 위해서,
+    // 사용하는 컴포넌트에서는 마운트 되지 않았을 때, 빈 html 조각 던지기
+    setComponentMounted(true);
+  }, []);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+  return [theme, toggleTheme, componentMounted];
+};
+  ```
 
-### Analyzing the Bundle Size
+### window.matchMedia 이해하기
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+`window.matchMedia` 메소드는 `Media Queries Level 5 specification` 이다.  
+OS 테마(lightMode or darkMode)를 브라우저에서 확인하는 속성이다.
 
-### Making a Progressive Web App
+브라우저 마다 지원 할수도 있고 안 할수도 있다.  
+최신 브라우저 대부분 지원한다.(`IE 10 이상`, `Edge`, `Firefox 6-`, `Chrome 9-`, ..)  
+`Can I Use` 에서 확인해서 사용하면 될거 같다.   
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+<br />
 
-### Advanced Configuration
+`OS 설정이, dark 일 때`
+```
+window.matchMedia('(prefers-color-scheme: dark)');
+// MediaQueryList {media: "(prefers-color-scheme: dark)", matches: true, onchange: null}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+window.matchMedia('(prefers-color-scheme: light)');
+// MediaQueryList {media: "(prefers-color-scheme: light)", matches: false, onchange: null}
+```
 
-### Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+`OS 설정이, light 일 때`
+```
+window.matchMedia('(prefers-color-scheme: light)');
+// MediaQueryList {media: "(prefers-color-scheme: light)", matches: true, onchange: null}
 
-### `yarn build` fails to minify
+window.matchMedia('(prefers-color-scheme: dark)');
+// MediaQueryList {media: "(prefers-color-scheme: dark)", matches: false, onchange: null}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### 참고
+
+- [css-tricks](https://css-tricks.com/a-dark-mode-toggle-with-react-and-themeprovider/)
